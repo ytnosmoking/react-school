@@ -5,63 +5,66 @@ import Link from 'umi/link';
 import { connect } from 'dva';
 import LoginComponents from './components/Login';
 import styles from './style.less';
+
 const { Tab, UserName, Password, Mobile, Captcha, Submit } = LoginComponents;
 
-@connect(({ login, loading }) => ({
-  userLogin: login,
-  submitting: loading.effects['login/login'],
+@connect(({ userLogin, loading }) => ({
+  userLogin,
+  submitting: loading.effects['userLogin/login'],
 }))
 class Login extends Component {
   loginForm = undefined;
+
   state = {
     type: 'account',
     autoLogin: true,
   };
+
   changeAutoLogin = e => {
     this.setState({
       autoLogin: e.target.checked,
     });
   };
+
   handleSubmit = (err, values) => {
     const { type } = this.state;
 
     if (!err) {
       const { dispatch } = this.props;
       dispatch({
-        type: 'login/login',
+        type: 'userLogin/login',
         payload: { ...values, type },
       });
     }
   };
+
   onTabChange = type => {
     this.setState({
       type,
     });
   };
+
   onGetCaptcha = () =>
     new Promise((resolve, reject) => {
       if (!this.loginForm) {
         return;
       }
 
-      this.loginForm.validateFields(['mobile'], {}, async (err, values) => {
+      this.loginForm.validateFields(['mobile'], {}, (err, values) => {
         if (err) {
           reject(err);
         } else {
           const { dispatch } = this.props;
-
-          try {
-            const success = await dispatch({
-              type: 'login/getCaptcha',
-              payload: values.mobile,
-            });
-            resolve(!!success);
-          } catch (error) {
-            reject(error);
-          }
+          dispatch({
+            type: 'userLogin/getCaptcha',
+            payload: values.mobile,
+          })
+            .then(resolve)
+            .catch(reject);
         }
       });
     });
+
   renderMessage = content => (
     <Alert
       style={{
@@ -83,7 +86,7 @@ class Login extends Component {
           defaultActiveKey={type}
           onTabChange={this.onTabChange}
           onSubmit={this.handleSubmit}
-          onCreate={form => {
+          ref={form => {
             this.loginForm = form;
           }}
         >
@@ -130,10 +133,7 @@ class Login extends Component {
               ]}
               onPressEnter={e => {
                 e.preventDefault();
-
-                if (this.loginForm) {
-                  this.loginForm.validateFields(this.handleSubmit);
-                }
+                this.loginForm.validateFields(this.handleSubmit);
               }}
             />
           </Tab>

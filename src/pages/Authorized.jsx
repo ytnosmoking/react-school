@@ -5,6 +5,8 @@ import pathToRegexp from 'path-to-regexp';
 import Authorized from '@/utils/Authorized';
 
 const getRouteAuthority = (path, routeData) => {
+  console.log(path);
+  console.log(routeData);
   let authorities;
   routeData.forEach(route => {
     if (route.authority) {
